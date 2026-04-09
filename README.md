@@ -63,9 +63,13 @@ Sample Questions
 - Show me consulting companies that accept 7.0 CGPA
 
 Project Structure
+
+placement-rag-assistant
 ├── app.py                  # Streamlit chat UI
 ├── rag_engine.py           # RAG pipeline — retrieval, prompt, LLM chain
-├── data/
-│   └── placement_dataset.xlsx
-├── requirements.txt
-└── .env                    # Not committed — add your own
+├── test_setup.py           # Pre-run checks for embedding, API key, dataset
+├── requirements.txt        # Python dependencies
+├── .env                    # Not committed — add your own
+├── .gitignore
+└── data/
+    └── placement_dataset.xlsx

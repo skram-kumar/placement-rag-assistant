@@ -8,13 +8,14 @@ If the model doesn't have the related content in the DB, it says it doesn't have
 
 Tech Stack
 
-| Layer         |      Tool                                |
-| LLM           | Groq API — `llama-3.3-70b-versatile`     |
-| Embeddings    | ChromaDB default (all-MiniLM-L6-v2 ONNX) |
-| Vector DB     | ChromaDB                                 |
-| RAG Framework | LangChain (LCEL)                         |
-| UI            | Streamlit                                |
-| Data          | Excel — 500 companies, 10 sectors        |
+| Layer | Tool |
+|---|---|
+| LLM | Groq API — llama-3.3-70b-versatile |
+| Embeddings | ChromaDB default (all-MiniLM-L6-v2 ONNX) |
+| Vector DB | ChromaDB |
+| RAG Framework | LangChain (LCEL) |
+| UI | Streamlit |
+| Data | Excel — 500 companies, 10 sectors |
 
 Dataset
 500 company records across 10 sectors — IT/Software, IT/Services, Product, Fintech, BFSI, Consulting, Analytics, Semiconductor, E-commerce, and Edtech. Each record has:

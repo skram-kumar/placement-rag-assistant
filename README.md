@@ -64,7 +64,8 @@ Sample Questions
 
 Project Structure
 
-placement-rag-assistant
+```
+placement-rag-assistant/
 ├── app.py                  # Streamlit chat UI
 ├── rag_engine.py           # RAG pipeline — retrieval, prompt, LLM chain
 ├── test_setup.py           # Pre-run checks for embedding, API key, dataset
@@ -73,3 +74,4 @@ placement-rag-assistant
 ├── .gitignore
 └── data/
     └── placement_dataset.xlsx
+```

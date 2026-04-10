@@ -36,7 +36,7 @@ if "messages" not in st.session_state:
             "role": "assistant",
             "content": (
                 "Hi! I'm your Placement Assistant 👋\n\n"
-                "I have data on **200 companies** — CTC, roles, CGPA cutoffs, "
+                "I have data on **500 companies** — CTC, roles, CGPA cutoffs, "
                 "internship availability, and sectors.\n\n"
                 "Try asking:\n"
                 "- *Which companies offer internships with CTC above 20 LPA?*\n"

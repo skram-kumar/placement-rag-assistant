@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  rag-api:
+    build: .
+    container_name: placement-rag-api
+    ports:
+      - "8000:8000"         # host:container — access via localhost:8000
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}   # pulled from your .env file automatically
+    volumes:
+      - chroma-data:/app/chroma_db     # named volume — runs natively inside container
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s         # check every 30 seconds
+      timeout: 10s          # fail if no response in 10 seconds
+      retries: 3            # mark unhealthy after 3 failures
+      start_period: 60s     # give the app 60s to start before health checks begin
+    restart: unless-stopped # auto-restart if the container crashes
+
+# ── Named volume for ChromaDB persistence ─────────────────────────────────────
+volumes:
+  chroma-data:

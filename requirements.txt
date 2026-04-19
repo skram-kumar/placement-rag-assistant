@@ -1,3 +1,4 @@
+# RAG core
 langchain
 langchain-core
 langchain-community
@@ -9,5 +10,12 @@ chromadb
 sentence-transformers
 pandas
 openpyxl
-streamlit
 python-dotenv
+
+# API layer
+fastapi
+uvicorn[standard]
+pydantic
+
+# Monitoring (added later with Docker)
+prometheus-fastapi-instrumentator

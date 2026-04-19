@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY rag_engine.py .
 COPY api/ ./api/
 COPY data/ ./data/
-COPY chroma_db/ ./chroma_db/
+
 
 # ── Environment variables ─────────────────────────────────────────────────────
 # GROQ_API_KEY is passed in via docker-compose.yml or -e flag

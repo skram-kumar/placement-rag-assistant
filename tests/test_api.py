@@ -8,11 +8,10 @@ from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 
 
-# ── Mock the RAG chain so tests don't need Groq API or ChromaDB ──────────────
-@pytest.fixture(autouse=True)
-def mock_rag(monkeypatch):
+@pytest.fixture
+def client():
     """
-    Patches initialize_rag() so the app starts without
+    Patches rag_engine.initialize_rag so the app starts without
     needing a real Groq API key or ChromaDB during CI.
     """
     mock_chain = MagicMock()
@@ -33,14 +32,16 @@ def mock_rag(monkeypatch):
     }
     mock_retriever = MagicMock()
 
-    with patch("api.main.initialize_rag", return_value=(mock_chain, mock_retriever)):
-        from api.main import app
-        yield app
+    from api.main import app
+    import api.main as main_module
+    main_module.app_state.clear()
+    main_module.app_state.update({
+        "rag_chain": mock_chain,
+        "retriever": mock_retriever,
+        "ready": True
+    })
 
-
-@pytest.fixture
-def client(mock_rag):
-    return TestClient(mock_rag)
+    yield TestClient(app)
 
 
 # ── Tests ─────────────────────────────────────────────────────────────────────

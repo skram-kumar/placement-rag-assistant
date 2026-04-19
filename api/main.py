@@ -18,6 +18,7 @@ from typing import Optional
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from monitoring.logger import log_query
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -179,6 +180,7 @@ def query(payload: QueryRequest, request: Request):
                 )
 
     logger.info(f"Query answered in {elapsed_ms} ms. Sources returned: {len(sources) if sources else 0}")
+    log_query(payload.question, answer, elapsed_ms, len(sources) if sources else 0)
 
     return QueryResponse(
         question=payload.question,

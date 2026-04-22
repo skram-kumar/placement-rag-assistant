@@ -62,7 +62,13 @@ def get_stats() -> dict:
         FROM queries
     """).fetchone()
     conn.close()
-    return dict(row) if row else {}
+    return {
+    "total_queries": row[0],
+    "avg_latency_ms": row[1],
+    "min_latency_ms": row[2],
+    "max_latency_ms": row[3],
+    "avg_sources": row[4],
+} if row else {}
 
 
 # Initialise DB on import

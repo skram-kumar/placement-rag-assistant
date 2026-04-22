@@ -10,15 +10,24 @@ Endpoints:
 """
 
 import os
+import sys
 import time
 import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
+# Ensure project root is in path so monitoring package can be found
+sys.path.insert(0, os.getcwd())
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from monitoring.logger import log_query
+
+try:
+    from monitoring.logger import log_query
+    MONITORING_ENABLED = True
+except Exception as e:
+    MONITORING_ENABLED = False
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -28,6 +37,11 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+if MONITORING_ENABLED:
+    logger.info("Monitoring enabled — queries will be logged to SQLite.")
+else:
+    logger.warning("Monitoring disabled — could not import monitoring.logger.")
 
 # ---------------------------------------------------------------------------
 # App state — RAG chain loaded once at startup
@@ -51,7 +65,6 @@ async def lifespan(app: FastAPI):
         app_state["ready"] = False
         app_state["startup_error"] = str(e)
     yield
-    # Shutdown
     logger.info("Shutting down.")
     app_state.clear()
 
@@ -68,7 +81,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # tighten this in production
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -78,16 +91,8 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 
 class QueryRequest(BaseModel):
-    question: str = Field(
-        ...,
-        min_length=3,
-        max_length=500,
-        example="Which companies offer internships with CTC above 20 LPA?",
-    )
-    include_sources: bool = Field(
-        default=True,
-        description="Whether to return the retrieved source documents.",
-    )
+    question: str = Field(..., min_length=3, max_length=500)
+    include_sources: bool = Field(default=True)
 
 
 class SourceDocument(BaseModel):
@@ -107,7 +112,7 @@ class QueryResponse(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    status: str          # "ok" | "degraded" | "error"
+    status: str
     rag_ready: bool
     message: str
 
@@ -136,15 +141,8 @@ def health():
 
 @app.post("/query", response_model=QueryResponse, tags=["RAG"])
 def query(payload: QueryRequest, request: Request):
-    """
-    Ask any placement-related question.
-    The RAG chain retrieves relevant company records and answers using Groq LLM.
-    """
     if not app_state.get("ready"):
-        raise HTTPException(
-            status_code=503,
-            detail="RAG chain is not ready. Check /health for details.",
-        )
+        raise HTTPException(status_code=503, detail="RAG chain is not ready.")
 
     logger.info(f"Query received: {payload.question!r}")
     start = time.perf_counter()
@@ -179,8 +177,15 @@ def query(payload: QueryRequest, request: Request):
                     )
                 )
 
-    logger.info(f"Query answered in {elapsed_ms} ms. Sources returned: {len(sources) if sources else 0}")
-    log_query(payload.question, answer, elapsed_ms, len(sources) if sources else 0)
+    num_sources = len(sources) if sources else 0
+    logger.info(f"Query answered in {elapsed_ms} ms. Sources: {num_sources}")
+
+    if MONITORING_ENABLED:
+        try:
+            log_query(payload.question, answer, elapsed_ms, num_sources)
+            logger.info("Query logged to monitoring DB.")
+        except Exception as e:
+            logger.error(f"Monitoring log failed: {e}")
 
     return QueryResponse(
         question=payload.question,
@@ -192,10 +197,6 @@ def query(payload: QueryRequest, request: Request):
 
 @app.post("/rebuild-index", response_model=RebuildResponse, tags=["Admin"])
 def rebuild_index():
-    """
-    Re-ingests the Excel dataset and rebuilds the ChromaDB vector store.
-    Use this when the dataset is updated.
-    """
     logger.info("Rebuild index triggered.")
     try:
         import shutil
@@ -207,7 +208,6 @@ def rebuild_index():
             EXCEL_PATH,
         )
 
-        # Remove existing ChromaDB
         if os.path.exists(CHROMA_DB_DIR):
             shutil.rmtree(CHROMA_DB_DIR)
             logger.info("Existing ChromaDB removed.")
@@ -215,7 +215,6 @@ def rebuild_index():
         documents = load_excel_as_documents(EXCEL_PATH)
         build_vectorstore(documents)
 
-        # Reload chain into app state
         rag_chain, retriever = initialize_rag()
         app_state["rag_chain"] = rag_chain
         app_state["retriever"] = retriever
